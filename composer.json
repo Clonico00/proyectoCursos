@@ -1,0 +1,21 @@
+{
+    "name": "javiermartinez/proyectocursos",
+    "autoload": {
+        "psr-4": {
+            "MVC\\" : "./",
+            "Controllers\\" : "./Controllers",
+            "Models\\" : "./Models",
+            "Lib\\" : "./Lib"
+        }
+    },
+    "authors": [
+        {
+            "name": "Javier Martinez Garcia",
+            "email": "79504901+Clonico00@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.5",
+        "firebase/php-jwt": "^6.4"
+    }
+}
