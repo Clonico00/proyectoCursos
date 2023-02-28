@@ -21,9 +21,26 @@ class ApiUsuarioController
 
     }
 
-    public function registro()
+    public function getAll()
     {
 
+    }
+
+    public function getUsuario(int $usuarioid)
+    {
+    }
+
+    public function crearUsuario()
+    {
+        
+    }
+
+    public function actualizaUsuario(int $usuarioid)
+    {
+    }
+
+    public function borrarUsuario(int $usuarioid)
+    {
     }
 
 }
