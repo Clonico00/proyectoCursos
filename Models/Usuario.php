@@ -24,18 +24,6 @@ class Usuario extends BaseDatos
         parent::__construct();
     }
 
-    public static function fromArray(array $data): Usuario
-    {
-        return new Usuario (
-            $data['id'],
-            $data['nombre'],
-            $data['apellidos'],
-            $data['email'],
-            $data['password'],
-            $data['rol'],
-            $data['confirmado']
-        );
-    }
 
     public function getId()
     {
@@ -141,7 +129,7 @@ class Usuario extends BaseDatos
     public function registrarUsuario(): bool
     {
         try {
-            $sql = "INSERT INTO usuarios (nombre, apellidos, email, password, rol, confirmado, token, token_exp) VALUES (:nombre, :apellidos, :email, :password, :rol, :confirmado, :token, :token_exp)";
+            $sql = "INSERT INTO proyectocursos.usuarios (nombre, apellidos, email, password, rol, confirmado, token, token_exp) VALUES (:nombre, :apellidos, :email, :password, :rol, :confirmado, :token, :token_exp)";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':nombre', $this->nombre);
             $consulta->bindParam(':apellidos', $this->apellidos);
@@ -168,7 +156,7 @@ class Usuario extends BaseDatos
     public function comprobarEmail(): bool
     {
         try {
-            $sql = "SELECT * FROM usuarios WHERE email = :email";
+            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':email', $this->email);
             $consulta->execute();
@@ -187,7 +175,7 @@ class Usuario extends BaseDatos
     public function loginUsuario(): bool
     {
         try {
-            $sql = "SELECT * FROM usuarios WHERE email = :email AND password = :password";
+            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email AND password = :password";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':email', $this->email);
             $consulta->bindParam(':password', $this->password);
@@ -204,10 +192,10 @@ class Usuario extends BaseDatos
     }
 
     //Método para obtener los datos de un usuario por su email
-    public function obtenerUsuarioPorEmail(): bool | Usuario
+    public function obtenerUsuarioPorEmail(): bool|Usuario
     {
         try {
-            $sql = "SELECT * FROM usuarios WHERE email = :email";
+            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':email', $this->email);
             $consulta->execute();
@@ -216,6 +204,38 @@ class Usuario extends BaseDatos
         } catch (PDOException $e) {
             echo "Error al obtener el usuario por email: " . $e->getMessage();
             return false;
+        }
+    }
+
+    //Método para validar los datos de un usuario, comprobando que en el nombre, apellidos,rol solo sean letras, el email sea un emial valido, y que el nombre, apellidos, email, password, rol y confirmado no estén vacíos
+
+    public static function fromArray(array $data): Usuario
+    {
+        return new Usuario (
+            $data['id'],
+            $data['nombre'],
+            $data['apellidos'],
+            $data['email'],
+            $data['password'],
+            $data['rol'],
+            $data['confirmado']
+        );
+    }
+
+    public function validarDatos(): bool
+    {
+        if (empty($this->nombre) || empty($this->apellidos) || empty($this->email) || empty($this->password) || empty($this->rol) || empty($this->confirmado)) {
+            return false;
+        } else {
+            if (!preg_match("/^[a-zA-Z ]*$/", $this->nombre) || !preg_match("/^[a-zA-Z ]*$/", $this->apellidos) || !preg_match("/^[a-zA-Z ]*$/", $this->rol)) {
+                return false;
+            } else {
+                if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
         }
     }
 }

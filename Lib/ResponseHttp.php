@@ -4,6 +4,17 @@ namespace Lib;
 
 class ResponseHttp
 {
+    final public static function statusMessage(int $status, string $answer): string
+    {
+        http_response_code($status);
+
+        $message = [
+            'status' => self::getStatusMessage($status),
+            'message' => $answer
+        ];
+        return json_encode($message);
+    }
+
     private static function getStatusMessage($code): string
     {
 
@@ -22,17 +33,6 @@ class ResponseHttp
             503 => 'Service Unavailable',
         ];
         return $statusMessage[$code] ?? $statusMessage[500];
-    }
-
-    final public static function statusMessage(int $status, string $answer): string
-    {
-        http_response_code($status);
-
-        $message = [
-            'status' => self::getStatusMessage($status),
-            'message' => $answer
-        ];
-        return json_encode($message);
     }
 
     public static function setHeaders(): void

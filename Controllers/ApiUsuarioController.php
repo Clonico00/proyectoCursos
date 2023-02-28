@@ -16,11 +16,13 @@ class ApiUsuarioController
         $this->pages = new Pages();
     }
 
-    public function login(){
+    public function login()
+    {
 
     }
 
-    public function registro(){
+    public function registro()
+    {
 
     }
 
