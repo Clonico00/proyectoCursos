@@ -18,11 +18,6 @@ class ApiUsuarioController
         $this->pages = new Pages();
     }
 
-    public function login()
-    {
-
-    }
-
     public function getAll()
     {
         $usuarios = $this->usuario->getAll();
@@ -48,7 +43,7 @@ class ApiUsuarioController
 
     public function getUsuario(int $usuarioid)
     {
-        $ponentes = $this->usuario->getById($usuarioid);
+        $usuarios = $this->usuario->getById($usuarioid);
         $UsuarioArr = [];
         if (!empty($usuarios)) {
             $UsuarioArr["message"] = json_decode(ResponseHttp::statusMessage(202, 'OK'));
@@ -73,7 +68,6 @@ class ApiUsuarioController
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $usuario = new Usuario();
             $datos_usuario = json_decode(file_get_contents("php://input"));
-
             if ($usuario->validarDatos($datos_usuario) ) {
 
                 $password = Security::encriptaPassw($datos_usuario->password);
@@ -104,10 +98,6 @@ class ApiUsuarioController
         
     }
 
-    public function actualizaUsuario(int $usuarioid)
-    {
-    }
-
     public function borrarUsuario(int $usuarioid)
     {
 
@@ -122,6 +112,38 @@ class ApiUsuarioController
         }
 
         $this->pages->render("read", ['response' => json_encode($response)]);
+    }
+
+    public function login()
+    {
+        if($_SERVER['REQUEST_METHOD']=='POST'){
+
+            $usuario=new Usuario();
+            $usuario_datos=json_decode(file_get_contents("php://input"));
+
+            if($usuario->validarDatosLogin($usuario_datos)){
+                if($usuario->login($usuario_datos)){
+                    http_response_code(200);
+                    $response=json_decode(ResponseHttp::statusMessage(200,"Usuario logeado correctamente"));
+                }else{
+                    http_response_code(404);
+                    $response=json_decode(ResponseHttp::statusMessage(404,$usuario->login($usuario_datos)));
+                }
+
+            }else{
+                http_response_code(404);
+                $response=json_decode(ResponseHttp::statusMessage(404,$usuario->validarDatosLogin($usuario_datos)));
+            }
+
+
+        }else{
+
+            $response=json_decode(ResponseHttp::statusMessage(404,"Error el método de recogida de datos debe de ser POST"));
+        }
+
+        $this->pages->render("read",['response'=> json_encode($response)]);
+
+
     }
 
 }

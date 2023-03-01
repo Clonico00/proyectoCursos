@@ -3,6 +3,8 @@
 namespace Models;
 
 use Lib\BaseDatos;
+use Lib\Security;
+use PDO;
 use PDOException;
 
 class Usuario extends BaseDatos
@@ -24,6 +26,20 @@ class Usuario extends BaseDatos
         parent::__construct();
     }
 
+    //-----------------------------------------------------------------------------------------------------------------
+
+    public static function fromArray(array $data): Usuario
+    {
+        return new Usuario (
+            $data['id'],
+            $data['nombre'],
+            $data['apellidos'],
+            $data['email'],
+            $data['password'],
+            $data['rol'],
+            $data['confirmado']
+        );
+    }
 
     public function getId()
     {
@@ -118,13 +134,15 @@ class Usuario extends BaseDatos
         return $this->token_exp;
     }
 
+
     public function setToken_exp($token_exp)
     {
         $this->token_exp = $token_exp;
         return $this;
     }
 
-    //Método para obtener un usuario por su id
+    //-----------------------------------------------------------------------------------------------------------------
+
     public function getById($usuarioid): array
     {
         try {
@@ -140,7 +158,6 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para obtener todos los usuarios
     public function getAll(): array
     {
         try {
@@ -155,23 +172,6 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para obtener los datos de un usuario por su email
-    public function getByEmail(): bool|Usuario
-    {
-        try {
-            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
-            $consulta = $this->conexion->prepare($sql);
-            $consulta->bindParam(':email', $this->email);
-            $consulta->execute();
-            $usuario = $consulta->fetch();
-            return Usuario::fromArray($usuario);
-        } catch (PDOException $e) {
-            echo "Error al obtener el usuario por email: " . $e->getMessage();
-            return false;
-        }
-    }
-
-    //Método para insertar un usuario
     public function insert(): bool
     {
         try {
@@ -197,7 +197,8 @@ class Usuario extends BaseDatos
 
     }
 
-    //Método para actualizar un usuario
+    //-----------------------------------------------------------------------------------------------------------------
+
     public function update($usuarioid)
     {
         try {
@@ -223,7 +224,6 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para eliminar un usuario
     public function delete($usuarioid): bool
     {
         try {
@@ -241,35 +241,55 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para loguear un usuario
-    public function login(): bool
+    public function login($data): bool
     {
         try {
-            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email AND password = :password";
-            $consulta = $this->conexion->prepare($sql);
-            $consulta->bindParam(':email', $this->email);
-            $consulta->bindParam(':password', $this->password);
-            $consulta->execute();
-            if ($consulta->rowCount() > 0) {
-                return true;
+            $usuario = $this->getByEmail($data->email);
+            if ($usuario) {
+                $password = Security::validaPassw($data->password, $usuario->password);
+                if ($password) {
+                    return true;
+                }
             } else {
                 return false;
             }
+            return false;
         } catch (PDOException $e) {
             echo "Error al loguear el usuario: " . $e->getMessage();
             return false;
         }
+
     }
 
-    //Método para comprobar si el email ya existe en la base de datos
-    public function comprobarEmail(): bool
+    public function getByEmail($usuarioemail): bool|object
     {
         try {
             $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
             $consulta = $this->conexion->prepare($sql);
-            $consulta->bindParam(':email', $this->email);
+            $consulta->bindParam(':email', $usuarioemail);
             $consulta->execute();
             if ($consulta->rowCount() > 0) {
+                return $consulta->fetch(PDO::FETCH_OBJ);
+            } else {
+                return false;
+            }
+        } catch (PDOException $e) {
+            echo "Error al obtener el usuario por email: " . $e->getMessage();
+            return false;
+        }
+    }
+
+    //-----------------------------------------------------------------------------------------------------------------
+
+    public function comprobarEmail($usuarioemail): bool
+    {
+        try {
+            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':email', $usuarioemail);
+            $consulta->execute();
+            $usuario = $consulta->fetch();
+            if ($usuario) {
                 return true;
             } else {
                 return false;
@@ -300,17 +320,20 @@ class Usuario extends BaseDatos
         return true;
     }
 
-    public static function fromArray(array $data): Usuario
+    public function validarDatosLogin($data)
     {
-        return new Usuario (
-            $data['id'],
-            $data['nombre'],
-            $data['apellidos'],
-            $data['email'],
-            $data['password'],
-            $data['rol'],
-            $data['confirmado']
-        );
+        if (empty($data->email) || !preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $data->email)) {
+            return false;
+        }
+        //la contraseña debe tener:
+        //    Al menos una letra minúscula (a-z)
+        //    Al menos una letra mayúscula (A-Z)
+        //    Al menos un número (\d)
+        //    Al menos un caracter especial común ([!@#$%^&*()-_=+\[]{}|;:,.<>/?])
+        if (empty($data->password) || !preg_match('/^[a-zA-Z0-9!@#$%^&*()_+{}[\]:;<>,.?\/\\-]+$/', $data->password)) {
+            return false;
+        }
+        return true;
     }
 
 

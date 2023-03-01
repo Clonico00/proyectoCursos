@@ -50,13 +50,13 @@ Router::add('GET', 'usuario/:id', function (int $usuarioid) {
 });
 
 //Ruta para crear usuario
-Router::add('POST', 'usuario/crear', function () {
+Router::add('POST', 'usuario/register', function () {
     (new ApiUsuarioController())->crearUsuario();
 });
 
-//Ruta para actualizar usuario
-Router::add('PUT', 'usuario/actualizar/:id', function (int $usuarioid) {
-    (new ApiUsuarioController())->actualizaUsuario($usuarioid);
+//Ruta para login usuario
+Router::add('POST', 'usuario/login', function () {
+    (new ApiUsuarioController())->login();
 });
 
 //Ruta para borrar usuario
