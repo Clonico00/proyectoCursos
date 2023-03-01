@@ -178,36 +178,23 @@ class Ponente extends BaseDatos
 
     public static function validarDatos($data): mixed
     {
-        //haciendo uso de las validaciones y sanitaziones validamos todos los datos dentro de $data y devolvemos true si todo es
-        // correcto y el error si no lo es
-        $data->nombre = filter_var($data->nombre, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => "/^[a-zA-Z0-9\s]+$/")));
-        if (htmlspecialchars($data->nombre, ENT_QUOTES, 'UTF-8') && $data->nombre) {
-           $data->apellidos = filter_var($data->apellidos, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => "/^[a-zA-Z0-9\s]+$/")));
-            if (htmlspecialchars($data->apellidos, ENT_QUOTES, 'UTF-8') && $data->apellidos) {
-                $data->imagen = filter_var($data->imagen, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => "/^[a-zA-Z0-9\s]+$/")));
-                if (htmlspecialchars($data->imagen, ENT_QUOTES, 'UTF-8') && $data->imagen) {
-                    $data->tags = filter_var($data->tags, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => "/^[a-zA-Z0-9\s]+$/")));
-                    if (htmlspecialchars($data->tags, ENT_QUOTES, 'UTF-8') && $data->tags) {
-                        $data->redes = filter_var($data->redes, FILTER_VALIDATE_REGEXP, array("options" => array("regexp" => "/^[a-zA-Z0-9\s]+$/")));
-                        if (htmlspecialchars($data->redes, ENT_QUOTES, 'UTF-8') && $data->redes) {
-                            return true;
-                        } else {
-                            return "Error en el campo redes";
-                        }
-                    } else {
-                        return "Error en el campo tags";
-                    }
-                } else {
-                    return "Error en el campo imagen";
-                }
-            } else {
-                return "Error en el campo apellidos";
-            }
-        } else {
-            return "Error en el campo nombre";
+        if (empty($data->nombre) || !preg_match('/^[a-zA-Z\s]+$/', $data->nombre)) {
+            return false;
         }
+        if (empty($data->apellidos) || !preg_match('/^[a-zA-Z\s]+$/', $data->apellidos)) {
+            return false;
+        }
+        if (!empty($data->imagen) && !preg_match('/^[a-zA-Z\s]+$/', $data->imagen)) {
+            return false;
+        }
+        if (!empty($data->tags) && !preg_match('/^[a-zA-Z\s]+$/', $data->tags)) {
+            return false;
+        }
+        if (!empty($data->redes) && !preg_match('/^[a-zA-Z\s]+$/', $data->redes)) {
+            return false;
+        }
+        return true;
     }
-
 
     public static function fromArray(array $data): Ponente
     {

@@ -140,6 +140,21 @@ class Usuario extends BaseDatos
         }
     }
 
+    //Método para obtener todos los usuarios
+    public function getAll(): array
+    {
+        try {
+            $sql = "SELECT * FROM proyectocursos.usuarios";
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->execute();
+            $usuarios = $consulta->fetchAll();
+            return $usuarios;
+        } catch (PDOException $e) {
+            echo "Error al obtener los usuarios: " . $e->getMessage();
+            return [];
+        }
+    }
+
     //Método para obtener los datos de un usuario por su email
     public function getByEmail(): bool|Usuario
     {
@@ -156,43 +171,11 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para obtener todos los usuarios
-
-    public static function fromArray(array $data): Usuario
-    {
-        return new Usuario (
-            $data['id'],
-            $data['nombre'],
-            $data['apellidos'],
-            $data['email'],
-            $data['password'],
-            $data['rol'],
-            $data['confirmado']
-        );
-    }
-
     //Método para insertar un usuario
-
-    public function getAll(): array
-    {
-        try {
-            $sql = "SELECT * FROM proyectocursos.usuarios";
-            $consulta = $this->conexion->prepare($sql);
-            $consulta->execute();
-            $usuarios = $consulta->fetchAll();
-            return $usuarios;
-        } catch (PDOException $e) {
-            echo "Error al obtener los usuarios: " . $e->getMessage();
-            return [];
-        }
-    }
-
-    //Método para actualizar un usuario
-
     public function insert(): bool
     {
         try {
-            $sql = "INSERT INTO proyectocursos.usuarios (nombre, apellidos, email, password, rol, confirmado, token, token_exp) VALUES (:nombre, :apellidos, :email, :password, :rol, :confirmado, :token, :token_exp)";
+            $sql = "INSERT INTO proyectocursos.usuarios (nombre, apellidos, email, password, rol, confirmado) VALUES (:nombre, :apellidos, :email, :password, :rol, :confirmado)";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':nombre', $this->nombre);
             $consulta->bindParam(':apellidos', $this->apellidos);
@@ -200,8 +183,7 @@ class Usuario extends BaseDatos
             $consulta->bindParam(':password', $this->password);
             $consulta->bindParam(':rol', $this->rol);
             $consulta->bindParam(':confirmado', $this->confirmado);
-            $consulta->bindParam(':token', $this->token);
-            $consulta->bindParam(':token_exp', $this->token_exp);
+
             if ($consulta->execute()) {
                 return true;
             } else {
@@ -215,8 +197,7 @@ class Usuario extends BaseDatos
 
     }
 
-    //Método para eliminar un usuario
-
+    //Método para actualizar un usuario
     public function update($usuarioid)
     {
         try {
@@ -242,8 +223,7 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para loguear un usuario
-
+    //Método para eliminar un usuario
     public function delete($usuarioid): bool
     {
         try {
@@ -261,8 +241,7 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para comprobar si el email ya existe en la base de datos
-
+    //Método para loguear un usuario
     public function login(): bool
     {
         try {
@@ -282,8 +261,7 @@ class Usuario extends BaseDatos
         }
     }
 
-    //Método para validar los datos de un usuario
-
+    //Método para comprobar si el email ya existe en la base de datos
     public function comprobarEmail(): bool
     {
         try {
@@ -302,21 +280,38 @@ class Usuario extends BaseDatos
         }
     }
 
-    public function validarDatos(): bool
+    public function validarDatos($data)
     {
-        if (empty($this->nombre) || empty($this->apellidos) || empty($this->email) || empty($this->password) || empty($this->rol) || empty($this->confirmado)) {
+        if (empty($data->nombre) || !preg_match('/^[a-zA-Z0-9]+$/', $data->nombre)) {
             return false;
-        } else {
-            if (!preg_match("/^[a-zA-Z ]*$/", $this->nombre) || !preg_match("/^[a-zA-Z ]*$/", $this->apellidos) || !preg_match("/^[a-zA-Z ]*$/", $this->rol)) {
-                return false;
-            } else {
-                if (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }
         }
+        if (empty($data->apellidos) || !preg_match('/^[a-zA-Z0-9]+$/', $data->apellidos)) {
+            return false;
+        }
+        if (empty($data->email) || !preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $data->email)) {
+            return false;
+        }
+        if (empty($data->rol) || !preg_match('/^[a-zA-Z0-9]+$/', $data->rol)) {
+            return false;
+        }
+        if (empty($data->confirmado) || !preg_match('/^[a-zA-Z0-9]+$/', $data->confirmado)) {
+            return false;
+        }
+        return true;
     }
+
+    public static function fromArray(array $data): Usuario
+    {
+        return new Usuario (
+            $data['id'],
+            $data['nombre'],
+            $data['apellidos'],
+            $data['email'],
+            $data['password'],
+            $data['rol'],
+            $data['confirmado']
+        );
+    }
+
 
 }
