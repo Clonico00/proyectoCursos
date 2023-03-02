@@ -15,10 +15,12 @@ $dotenv->safeLoad();
 Router::add('GET', 'auth', function () {
     require '../views/auth.php';
 });
+
 //Ruta para obtener todos los ponentes
 Router::add('GET', 'ponente', function () {
     (new ApiPonenteController())->getAll();
 });
+
 //Ruta para obtener un ponente
 Router::add('GET', 'ponente/:id', function (int $ponenteid) {
     (new ApiponenteController())->getPonente($ponenteid);
@@ -63,5 +65,11 @@ Router::add('POST', 'usuario/login', function () {
 Router::add('DELETE', 'usuario/borrar/:id', function (int $usuarioid) {
     (new ApiUsuarioController())->borrarUsuario($usuarioid);
 });
+
+//Ruta para confirmar cuenta
+Router::add('POST', 'confirmarCuenta/', function () {
+    (new ApiUsuarioController())->confirmarCuenta();
+});
+
 
 Router::dispatch();

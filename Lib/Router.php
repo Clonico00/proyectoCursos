@@ -40,7 +40,7 @@ class Router
 
             $param = $match[0];
 
-            $action = preg_replace('/' . $match[0] . '/', ':id', $action);//quitamos la primera parte que se repite siempre (clinicarouter)
+            $action = preg_replace('/' . $match[0] . '/', ':id', $action);
         }
 
         $fn = self::$routes[$method][$action] ?? null;

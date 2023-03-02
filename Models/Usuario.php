@@ -141,8 +141,6 @@ class Usuario extends BaseDatos
         return $this;
     }
 
-    //-----------------------------------------------------------------------------------------------------------------
-
     public function getById($usuarioid): array
     {
         try {
@@ -156,6 +154,15 @@ class Usuario extends BaseDatos
             echo "Error al obtener el usuario: " . $e->getMessage();
             return [];
         }
+    }
+
+    public function getDBToken(): array
+    {
+        $sql = "SELECT token FROM proyectocursos.usuarios WHERE email = :email";
+        $consulta = $this->conexion->prepare($sql);
+        $consulta->bindParam(':email', $this->email);
+        $consulta->execute();
+        return $consulta->fetch(PDO::FETCH_ASSOC);
     }
 
     public function getAll(): array
@@ -172,9 +179,29 @@ class Usuario extends BaseDatos
         }
     }
 
+    public function getByEmail($usuarioemail): bool|object
+    {
+        try {
+            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':email', $usuarioemail);
+            $consulta->execute();
+            if ($consulta->rowCount() > 0) {
+                return $consulta->fetch(PDO::FETCH_OBJ);
+            } else {
+                return false;
+            }
+        } catch (PDOException $e) {
+            echo "Error al obtener el usuario por email: " . $e->getMessage();
+            return false;
+        }
+    }
+
     public function insert(): bool
     {
         try {
+            $this->confirmado = 0;
+
             $sql = "INSERT INTO proyectocursos.usuarios (nombre, apellidos, email, password, rol, confirmado) VALUES (:nombre, :apellidos, :email, :password, :rol, :confirmado)";
             $consulta = $this->conexion->prepare($sql);
             $consulta->bindParam(':nombre', $this->nombre);
@@ -196,8 +223,6 @@ class Usuario extends BaseDatos
 
 
     }
-
-    //-----------------------------------------------------------------------------------------------------------------
 
     public function update($usuarioid)
     {
@@ -245,7 +270,7 @@ class Usuario extends BaseDatos
     {
         try {
             $usuario = $this->getByEmail($data->email);
-            if ($usuario) {
+            if ($usuario and $usuario->confirmado == 1) {
                 $password = Security::validaPassw($data->password, $usuario->password);
                 if ($password) {
                     return true;
@@ -261,25 +286,60 @@ class Usuario extends BaseDatos
 
     }
 
-    public function getByEmail($usuarioemail): bool|object
+    public function guardaToken($fechaExp): bool
     {
+
         try {
-            $sql = "SELECT * FROM proyectocursos.usuarios WHERE email = :email";
+            $sql = "UPDATE proyectocursos.usuarios SET token = :token, token_exp = :token_exp WHERE email = :email";
             $consulta = $this->conexion->prepare($sql);
-            $consulta->bindParam(':email', $usuarioemail);
-            $consulta->execute();
-            if ($consulta->rowCount() > 0) {
-                return $consulta->fetch(PDO::FETCH_OBJ);
+            $consulta->bindParam(':token', $this->token);
+            $consulta->bindParam(':email', $this->email);
+            $consulta->bindParam(':token_exp', $fechaExp);
+            if ($consulta->execute()) {
+                return true;
             } else {
                 return false;
             }
         } catch (PDOException $e) {
-            echo "Error al obtener el usuario por email: " . $e->getMessage();
+            echo "Error al guardar el token: " . $e->getMessage();
+            return false;
+        }
+
+    }
+
+    public function confirmarCuenta($token): bool
+    {
+        try {
+            $sql = "UPDATE proyectocursos.usuarios SET confirmado = 1 WHERE token = :token";
+            $consulta = $this->conexion->prepare($sql);
+            $consulta->bindParam(':token', $token);
+            if ($consulta->execute()) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (PDOException $e) {
+            echo "Error al confirmar la cuenta: " . $e->getMessage();
             return false;
         }
     }
 
-    //-----------------------------------------------------------------------------------------------------------------
+    public function checkTokenUser(){
+        $sql = "SELECT * FROM proyectocursos.usuarios WHERE token = :token";
+        $consulta = $this->conexion->prepare($sql);
+        $consulta->bindParam(':token', $this->token);
+        $consulta->execute();
+        if ($consulta->rowCount() > 0) {
+            return $consulta->fetch(PDO::FETCH_OBJ);
+        } else {
+            return false;
+        }
+    }
+
+    public function checkToken($token): bool
+    {
+        return $this->getDBToken()["token"] == $token;
+    }
 
     public function comprobarEmail($usuarioemail): bool
     {
@@ -300,7 +360,7 @@ class Usuario extends BaseDatos
         }
     }
 
-    public function validarDatos($data)
+    public function validarDatos($data): bool
     {
         if (empty($data->nombre) || !preg_match('/^[a-zA-Z0-9]+$/', $data->nombre)) {
             return false;
@@ -314,13 +374,10 @@ class Usuario extends BaseDatos
         if (empty($data->rol) || !preg_match('/^[a-zA-Z0-9]+$/', $data->rol)) {
             return false;
         }
-        if (empty($data->confirmado) || !preg_match('/^[a-zA-Z0-9]+$/', $data->confirmado)) {
-            return false;
-        }
         return true;
     }
 
-    public function validarDatosLogin($data)
+    public function validarDatosLogin($data): bool
     {
         if (empty($data->email) || !preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $data->email)) {
             return false;
@@ -335,6 +392,7 @@ class Usuario extends BaseDatos
         }
         return true;
     }
+
 
 
 }

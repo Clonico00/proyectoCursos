@@ -2,6 +2,9 @@
 
 namespace Controllers;
 
+use Exception;
+use Firebase\JWT\JWT;
+use Lib\Email;
 use Lib\Pages;
 use Lib\ResponseHttp;
 use Lib\Security;
@@ -68,7 +71,7 @@ class ApiUsuarioController
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $usuario = new Usuario();
             $datos_usuario = json_decode(file_get_contents("php://input"));
-            if ($usuario->validarDatos($datos_usuario) ) {
+            if ($usuario->validarDatos($datos_usuario)) {
 
                 $password = Security::encriptaPassw($datos_usuario->password);
 
@@ -77,9 +80,11 @@ class ApiUsuarioController
                 $usuario->setEmail($datos_usuario->email);
                 $usuario->setPassword($password);
                 $usuario->setRol($datos_usuario->rol);
-                $usuario->setConfirmado($datos_usuario->confirmado);
 
                 if ($usuario->insert()) {
+                    $this->creartoken($usuario, $datos_usuario->email);
+                    $email = new Email($datos_usuario->email, $usuario->getToken());
+                    $email->sendConfirmation($datos_usuario->email);
                     http_response_code(201);
                     $response = json_decode(ResponseHttp::statusMessage(201, "Usuario creado correctamente"));
                 } else {
@@ -95,7 +100,21 @@ class ApiUsuarioController
         }
 
         $this->pages->render("read", ['response' => json_encode($response)]);
-        
+
+    }
+
+    public function crearToken($usuario, $email)
+    {
+
+        $clave = Security::clavesecreta();
+        $token = Security::crearToken($clave, [$email]);
+        $token_seguro = JWT::encode($token, $clave, 'HS256');
+        $usuario->setToken($token_seguro);
+        echo $token["exp"];
+        $usuario->guardaToken($token["exp"]);
+
+        return $token_seguro;
+
     }
 
     public function borrarUsuario(int $usuarioid)
@@ -116,32 +135,56 @@ class ApiUsuarioController
 
     public function login()
     {
-        if($_SERVER['REQUEST_METHOD']=='POST'){
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-            $usuario=new Usuario();
-            $usuario_datos=json_decode(file_get_contents("php://input"));
+            $usuario = new Usuario();
+            $usuario_datos = json_decode(file_get_contents("php://input"));
 
-            if($usuario->validarDatosLogin($usuario_datos)){
-                if($usuario->login($usuario_datos)){
+            if ($usuario->validarDatosLogin($usuario_datos)) {
+                if ($usuario->login($usuario_datos)) {
                     http_response_code(200);
-                    $response=json_decode(ResponseHttp::statusMessage(200,"Usuario logeado correctamente"));
-                }else{
+                    $response = json_decode(ResponseHttp::statusMessage(200, "Usuario logeado correctamente"));
+                } else {
                     http_response_code(404);
-                    $response=json_decode(ResponseHttp::statusMessage(404,$usuario->login($usuario_datos)));
+                    $response = json_decode(ResponseHttp::statusMessage(404, "Error en los datos del usuario"));
                 }
 
-            }else{
+            } else {
                 http_response_code(404);
-                $response=json_decode(ResponseHttp::statusMessage(404,$usuario->validarDatosLogin($usuario_datos)));
+                $response = json_decode(ResponseHttp::statusMessage(404, "Error en los datos del usuario"));
             }
 
 
-        }else{
+        } else {
 
-            $response=json_decode(ResponseHttp::statusMessage(404,"Error el método de recogida de datos debe de ser POST"));
+            $response = json_decode(ResponseHttp::statusMessage(404, "Error el método de recogida de datos debe de ser POST"));
         }
 
-        $this->pages->render("read",['response'=> json_encode($response)]);
+        $this->pages->render("read", ['response' => json_encode($response)]);
+
+
+    }
+
+    public function confirmarCuenta(): void
+    {
+        $key = Security::claveSecreta();
+        $usuario = new Usuario();
+        $token = json_decode(file_get_contents("php://input"));
+
+        try {
+            $usuario->setToken($token->token);
+            if ($usuario->checkTokenUser()) {
+                $usuario->confirmarCuenta($token->token);
+                echo json_encode([$usuario, ResponseHttp::statusMessage(200, "Cuenta confirmada correctamente. Ya puede iniciar sesión")]);
+
+            } else {
+                echo ResponseHttp::statusMessage(401, "Token invalidfddo o expirado. Registrese de nuevo.");
+            }
+
+        } catch (Exception $e) {
+            echo ResponseHttp::statusMessage(401, "Token invalido o expirado. Registrese de nuevo.");
+            echo $e->getMessage();
+        }
 
 
     }

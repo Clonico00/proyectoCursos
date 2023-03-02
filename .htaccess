@@ -1,11 +1,14 @@
 <IfModule mod_rewrite.c>
 
-RewriteEngine on
-Options All -Indexes
-Options -MultiViews
+    #Activar rewrite
+    RewriteEngine on
+    Options All -Indexes
+    Options -MultiViews
+    #ErrorDocument 404 http://localhost/proyecto-cursos/
+    RewriteCond %{SCRIPT_FILENAME} !-d
+    RewriteCond %{SCRIPT_FILENAME} !-f
 
-RewriteCond %{REQUEST_FILENAME} !-f
-
-RewriteRule ^ index.php [QSA,L]
+    # RewriteRule ^(.*)/(.*) index.php?controller=$1&action=$2
+    RewriteRule ^ index.php [QSA,L]
 
 </IfModule>
