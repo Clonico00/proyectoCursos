@@ -146,7 +146,7 @@ class ApiUsuarioController
                     $response = json_decode(ResponseHttp::statusMessage(200, "Usuario logeado correctamente"));
                 } else {
                     http_response_code(404);
-                    $response = json_decode(ResponseHttp::statusMessage(404, "Error en los datos del usuario"));
+                    $response = json_decode(ResponseHttp::statusMessage(404, "Error en los datos del usuario, el usuario no existe o la contraseña es incorrecta o no esta confirmado"));
                 }
 
             } else {

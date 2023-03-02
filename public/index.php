@@ -71,5 +71,9 @@ Router::add('POST', 'confirmarCuenta/', function () {
     (new ApiUsuarioController())->confirmarCuenta();
 });
 
+//Router::add('GET', 'confirmarCuenta/:id', function (string $token) {
+
+//    (new ApiUsuarioController())->confirmarCuenta($token);
+//});
 
 Router::dispatch();
